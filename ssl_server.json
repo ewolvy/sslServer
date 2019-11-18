@@ -1,0 +1,75 @@
+{
+  "devices": {
+    "ir": {
+      "command": "irsend SEND_ONCE "
+    },
+    "rf": {
+      "command": "python3 /usr/bin/rfsend.py -p 180 -t 1 "
+    },
+    "sensor": {
+      "command": "database"
+    }
+  },
+  "paths": [
+    {
+      "path": "AAKaysun",
+      "code": "AAKaysun",
+      "type": "ir"
+    },
+    {
+      "path": "AAProKlima",
+      "code": "AAProKlima",
+      "type": "ir"
+    },
+    {
+      "path": "AAGeneral",
+      "code": "FUJITSU_AC",
+      "type": "ir"
+    },
+    {
+      "path": "lamp",
+      "code": "lamp",
+      "type": "ir"
+    },
+    {
+      "path": "Bathroom/ON",
+      "code": "333107",
+      "type": "rf"
+    },
+    {
+      "path": "Bathroom/OFF",
+      "code": "333116",
+      "type": "rf"
+    },
+    {
+      "path": "TV/ON",
+      "code": "333251",
+      "type": "rf"
+    },
+    {
+      "path": "TV/OFF",
+      "code": "333260",
+      "type": "rf"
+    },
+    {
+      "path": "sensor01",
+      "code": "dormitorio",
+      "type": "sensor"
+    },
+    {
+      "path": "sensor02",
+      "code": "salita",
+      "type": "sensor"
+    },
+    {
+      "path": "sensor03",
+      "code": "invitados",
+      "type": "sensor"
+    },
+    {
+      "path": "sensor04",
+      "code": "salon",
+      "type": "sensor"
+    }
+  ]
+}

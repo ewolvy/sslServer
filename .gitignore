@@ -1,0 +1,5 @@
+.vscode
+fullchain.pem
+privkey.pem
+sslRaspRemote.py
+broadcastmanager.py
