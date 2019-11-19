@@ -8,6 +8,7 @@ import sys
 import os
 import json
 import re
+import sqlite3
 import time
 from http.server import SimpleHTTPRequestHandler, HTTPServer
 
@@ -18,16 +19,39 @@ class AuthHandler(SimpleHTTPRequestHandler):
         """ Execute the given command and return the result """
         print(command)
         result = os.system(command)
-        self.wfile.write(json.dumps({'Response': [{"Command": command},
-                                                  {"Result": result}]}).encode())
+        self.wfile.write(json.dumps(
+            {'Response': [{"Command": command},
+                          {"Result": result}]}).encode())
 
-    def add_to_db(self):
+    def add_to_db(self, data, room):
         """ Add the sensor data to the database """
-        #TODO: manage database
-        if re.match('01/', self.path[7:]) is not None:
-            print("01")
-        else:
-            print("Not valid")
+        connection = sqlite3.connect('sensor_data.db')
+        cursor = connection.cursor()
+        to_insert = str(time.time()) + data
+        splitted = re.split("[TH]", to_insert)
+        splitted.append(room)
+        sql_insert = "INSERT INTO tempAndHumidity VALUES (?, ?, ?, ?)"
+        cursor.execute(sql_insert, splitted)
+        connection.commit()
+        connection.close()
+        self.wfile.write(json.dumps(
+            {'Response': [{"Command": sql_insert}]}).encode())
+
+    def select_from_db(self, room):
+        """ Get the sensor data from the database """
+        connection = sqlite3.connect('sensor_data.db')
+        cursor = connection.cursor()
+        sql_select = "SELECT time, temp, humidity FROM tempAndHumidity WHERE room=? ORDER BY time"
+        cursor.execute(sql_select, (room,))
+        data = cursor.fetchall()
+        connection.close()
+        keys = ["time", "temp", "humidity"]
+        response = []
+        for row in data:
+            zip_obj = zip(keys, row)
+            response.append(dict(zip_obj))
+        print(response)
+        self.wfile.write(json.dumps(response).encode())
 
     def do_HEAD(self):
         """ Send the header """
@@ -58,21 +82,26 @@ class AuthHandler(SimpleHTTPRequestHandler):
 
             for path in config["paths"]:
                 if re.match("/" + path["path"] + "/", self.path) is not None:
-                    if path["type"] == "ir":
+                    if config["devices"][path["type"]]["type"] == "command":
+                        # When the device type is command, execute it
                         command = config["devices"][path["type"]]["command"]
                         command = command + path["code"]
-                        command = command + " "
-                        start = len(path["path"]) + 2
-                        command = command + self.path[start:]
+                        if config["devices"][path["type"]]["hasExtra"] == "true":
+                            command = command + " "
+                            start = len(path["path"]) + 2
+                            command = command + self.path[start:]
                         self.execute(command)
-                    elif path["type"] == "rf":
-                        command = config["devices"][path["type"]]["command"]
-                        command = command + path["code"]
-                        self.execute(command)
-                    elif path["type"] == "sensor":
-                        print("sensor")
+                    elif config["devices"][path["type"]]["type"] == "database":
+                        # When the device type is database, check if it's for select or insert
+                        if config["devices"][path["type"]]["operation"] == "insert":
+                            start = len(path["path"]) + 2
+                            self.add_to_db(data=self.path[start:], room=path["code"])
+                        elif config["devices"][path["type"]]["operation"] == "select":
+                            start = len(path["path"]) + 2
+                            self.select_from_db(room=self.path[start:])
                     else:
                         print("desconocido")
+                        print(config["devices"][path["type"]]["type"])
 
             if re.match('/exitprogram/', self.path) is not None:
                 self.wfile.write(json.dumps({"Exit": 0}).encode())
@@ -133,9 +162,24 @@ def create_server(port, password):
     httpd.serve_forever()
 
 
+def check_database():
+    """ Check if database file exists with the table tempAndHumidity. If not, create it """
+    connection = sqlite3.connect('sensor_data.db')
+    cursor = connection.cursor()
+
+    cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='tempAndHumidity'")
+
+    if cursor.fetchone() is None:
+        cursor.execute(
+            "CREATE TABLE tempAndHumidity (time real, temp real, humidity real, room text)")
+        connection.commit()
+
+    connection.close()
+
+
 if __name__ == '__main__':
-    # if len(sys.argv) < 3:
-    #     print("use sslRaspRemote.py [port] [username:password]")
-    #     sys.exit()
+    if len(sys.argv) < 3:
+        print("use sslRaspRemote.py [port] [username:password]")
+        sys.exit()
+    check_database()
     create_server(int(sys.argv[1]), sys.argv[2])
-    # create_server(7012, "juanjo:m4ndr4k3")

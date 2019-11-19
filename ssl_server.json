@@ -1,13 +1,22 @@
 {
   "devices": {
     "ir": {
-      "command": "irsend SEND_ONCE "
+      "type": "command",
+      "command": "irsend SEND_ONCE ",
+      "hasExtra": "true"
     },
     "rf": {
-      "command": "python3 /usr/bin/rfsend.py -p 180 -t 1 "
+      "type": "command",
+      "command": "python3 /usr/bin/rfsend.py -p 180 -t 1 ",
+      "hasExtra": "false"
     },
-    "sensor": {
-      "command": "database"
+    "sensor_add": {
+      "type": "database",
+      "operation": "insert"
+    },
+    "sensor_select": {
+      "type": "database",
+      "operation": "select"
     }
   },
   "paths": [
@@ -54,22 +63,26 @@
     {
       "path": "sensor01",
       "code": "dormitorio",
-      "type": "sensor"
+      "type": "sensor_add"
     },
     {
       "path": "sensor02",
       "code": "salita",
-      "type": "sensor"
+      "type": "sensor_add"
     },
     {
       "path": "sensor03",
       "code": "invitados",
-      "type": "sensor"
+      "type": "sensor_add"
     },
     {
       "path": "sensor04",
       "code": "salon",
-      "type": "sensor"
+      "type": "sensor_add"
+    },
+    {
+      "path": "read_sensor",
+      "type": "sensor_select"
     }
   ]
 }
