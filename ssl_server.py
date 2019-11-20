@@ -34,6 +34,7 @@ class AuthHandler(SimpleHTTPRequestHandler):
         cursor.execute(sql_insert, splitted)
         connection.commit()
         connection.close()
+        print(sql_insert)
         self.wfile.write(json.dumps(
             {'Response': [{"Command": sql_insert}]}).encode())
 
@@ -80,10 +81,13 @@ class AuthHandler(SimpleHTTPRequestHandler):
             self.send_header("Content-type", "application/json")
             self.end_headers()
 
+            print("Buscando acción a realizar para:")
+            print(self.path)
             for path in config["paths"]:
                 if re.match("/" + path["path"] + "/", self.path) is not None:
                     if config["devices"][path["type"]]["type"] == "command":
                         # When the device type is command, execute it
+                        print("Acción de tipo comando")
                         command = config["devices"][path["type"]]["command"]
                         command = command + path["code"]
                         if config["devices"][path["type"]]["hasExtra"] == "true":
@@ -93,6 +97,7 @@ class AuthHandler(SimpleHTTPRequestHandler):
                         self.execute(command)
                     elif config["devices"][path["type"]]["type"] == "database":
                         # When the device type is database, check if it's for select or insert
+                        print("Acción de tipo base de datos")
                         if config["devices"][path["type"]]["operation"] == "insert":
                             start = len(path["path"]) + 2
                             self.add_to_db(data=self.path[start:], room=path["code"])
@@ -155,10 +160,10 @@ def create_server(port, password):
     httpd = CustomHTTPServer(('', port), AuthHandler)
     httpd.set_auth(password)
     httpd.set_config(get_preferences())
-    httpd.socket = ssl.wrap_socket(httpd.socket, server_side=True,
-                                   certfile="fullchain.pem",
-                                   keyfile="privkey.pem",
-                                   ssl_version=ssl.PROTOCOL_TLSv1)
+    # httpd.socket = ssl.wrap_socket(httpd.socket, server_side=True,
+    #                                certfile="fullchain.pem",
+    #                                keyfile="privkey.pem",
+    #                                ssl_version=ssl.PROTOCOL_TLSv1)
     httpd.serve_forever()
 
 
