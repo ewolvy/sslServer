@@ -1,4 +1,10 @@
 {
+  "certs":{
+    "source": "remote",
+    "certfile": "/media/certs/live/ewolvy.mooo.com/fullchain.pem",
+    "keyfile": "/media/certs/live/ewolvy.mooo.com/privkey.pem",
+    "mount_point": "/media/certs"
+  },
   "devices": {
     "ir": {
       "type": "command",

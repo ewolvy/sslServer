@@ -160,10 +160,41 @@ def create_server(port, password):
     httpd = CustomHTTPServer(('', port), AuthHandler)
     httpd.set_auth(password)
     httpd.set_config(get_preferences())
-    # httpd.socket = ssl.wrap_socket(httpd.socket, server_side=True,
-    #                                certfile="fullchain.pem",
-    #                                keyfile="privkey.pem",
-    #                                ssl_version=ssl.PROTOCOL_TLSv1)
+    certfile = None
+    keyfile = None
+    if httpd.config["certs"]["source"] == "local":
+        print("Local certs files")
+        if os.path.isfile(httpd.config["certs"]["certfile"]):
+            certfile = httpd.config["certs"]["certfile"]
+        else:
+            sys.exit("Local certfile not found. Please review your ssl_server.json.")
+        if os.path.isfile(httpd.config["certs"]["keyfile"]):
+            keyfile = httpd.config["certs"]["keyfile"]
+        else:
+            sys.exit("Local keyfile not found. Please review your ssl_server.json.")
+    if httpd.config["certs"]["source"] == "remote":
+        while True:
+            command = "mount " + httpd.config["certs"]["mount_point"]
+            os.system(command)
+            if not os.path.ismount(httpd.config["certs"]["mount_point"]):
+                print("Mount failed. Waiting 1 minute for mount retry.")
+                time.sleep(60)
+            else:
+                print("Certification location mounted.")
+                break
+        if os.path.isfile(httpd.config["certs"]["certfile"]):
+            certfile = httpd.config["certs"]["certfile"]
+        else:
+            sys.exit("Remote certfile not found. Please review your ssl_server.json.")
+        if os.path.isfile(httpd.config["certs"]["keyfile"]):
+            keyfile = httpd.config["certs"]["keyfile"]
+        else:
+            sys.exit("Remote keyfile not found. Please review your ssl_server.json.")
+    if certfile is not None and keyfile is not None:
+        httpd.socket = ssl.wrap_socket(httpd.socket, server_side=True,
+                                       certfile=certfile,
+                                       keyfile=keyfile,
+                                       ssl_version=ssl.PROTOCOL_TLSv1)
     httpd.serve_forever()
 
 
