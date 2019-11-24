@@ -17,7 +17,7 @@ class AuthHandler(SimpleHTTPRequestHandler):
 
     def execute(self, command):
         """ Execute the given command and return the result """
-        print(command)
+        sys.stdout.write(command)
         result = os.system(command)
         self.wfile.write(json.dumps(
             {'Response': [{"Command": command},
@@ -34,7 +34,7 @@ class AuthHandler(SimpleHTTPRequestHandler):
         cursor.execute(sql_insert, splitted)
         connection.commit()
         connection.close()
-        print(sql_insert)
+        sys.stdout.write(sql_insert)
         self.wfile.write(json.dumps(
             {'Response': [{"Command": sql_insert}]}).encode())
 
@@ -51,19 +51,19 @@ class AuthHandler(SimpleHTTPRequestHandler):
         for row in data:
             zip_obj = zip(keys, row)
             response.append(dict(zip_obj))
-        print(response)
+        sys.stdout.write(response)
         self.wfile.write(json.dumps(response).encode())
 
     def do_HEAD(self):
         """ Send the header """
-        print("Send header")
+        sys.stdout.write("Send header")
         self.send_response(200)
         self.send_header('Content-type', 'text/html')
         self.end_headers()
 
     def do_authhead(self):
         """ Send the authentication header """
-        print("Send header")
+        sys.stdout.write("Send header")
         self.send_response(401)
         self.send_header('WWW-Authenticate', 'Basic realm=\"Test\"')
         self.send_header('Content-type', 'text/html')
@@ -81,13 +81,13 @@ class AuthHandler(SimpleHTTPRequestHandler):
             self.send_header("Content-type", "application/json")
             self.end_headers()
 
-            print("Searching action for:")
-            print(self.path)
+            sys.stdout.write("Searching action for:")
+            sys.stdout.write(self.path)
             for path in config["paths"]:
                 if re.match("/" + path["path"], self.path) is not None:
                     if config["devices"][path["type"]]["type"] == "command":
                         # When the device type is command, execute it
-                        print("Action type: command")
+                        sys.stdout.write("Action type: command")
                         command = config["devices"][path["type"]]["command"]
                         command = command + path["code"]
                         if config["devices"][path["type"]]["hasExtra"] == "true":
@@ -97,7 +97,7 @@ class AuthHandler(SimpleHTTPRequestHandler):
                         self.execute(command)
                     elif config["devices"][path["type"]]["type"] == "database":
                         # When the device type is database, check if it's for select or insert
-                        print("Action type: database")
+                        sys.stdout.write("Action type: database")
                         if config["devices"][path["type"]]["operation"] == "insert":
                             start = len(path["path"]) + 2
                             self.add_to_db(data=self.path[start:], room=path["code"])
@@ -105,13 +105,13 @@ class AuthHandler(SimpleHTTPRequestHandler):
                             start = len(path["path"]) + 2
                             self.select_from_db(room=self.path[start:])
                     else:
-                        print("Unknown")
-                        print(config["devices"][path["type"]]["type"])
+                        sys.stdout.write("Unknown")
+                        sys.stdout.write(config["devices"][path["type"]]["type"])
 
             if re.match('/exitprogram/', self.path) is not None:
                 self.wfile.write(json.dumps({"Exit": 0}).encode())
                 time.sleep(1)
-                print("Exiting")
+                sys.stdout.write("Exiting")
                 sys.exit(0)
         else:
             self.do_authhead()
@@ -163,7 +163,7 @@ def create_server(port, password):
     certfile = None
     keyfile = None
     if httpd.config["certs"]["source"] == "local":
-        print("Local certs files")
+        sys.stdout.write("Local certs files")
         if os.path.isfile(httpd.config["certs"]["certfile"]):
             certfile = httpd.config["certs"]["certfile"]
         else:
@@ -177,10 +177,10 @@ def create_server(port, password):
             command = "mount " + httpd.config["certs"]["mount_point"]
             os.system(command)
             if not os.path.ismount(httpd.config["certs"]["mount_point"]):
-                print("Mount failed. Waiting 1 minute for mount retry.")
+                sys.stdout.write("Mount failed. Waiting 1 minute for mount retry.")
                 time.sleep(60)
             else:
-                print("Certification location mounted.")
+                sys.stdout.write("Certification location mounted.")
                 break
         if os.path.isfile(httpd.config["certs"]["certfile"]):
             certfile = httpd.config["certs"]["certfile"]
@@ -215,7 +215,7 @@ def check_database():
 
 if __name__ == '__main__':
     if len(sys.argv) < 3:
-        print("use sslRaspRemote.py [port] [username:password]")
+        sys.stdout.write("use sslRaspRemote.py [port] [username:password]")
         sys.exit()
     check_database()
     create_server(int(sys.argv[1]), sys.argv[2])
