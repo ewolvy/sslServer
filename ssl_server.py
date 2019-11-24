@@ -81,13 +81,13 @@ class AuthHandler(SimpleHTTPRequestHandler):
             self.send_header("Content-type", "application/json")
             self.end_headers()
 
-            print("Buscando acción a realizar para:")
+            print("Searching action for:")
             print(self.path)
             for path in config["paths"]:
                 if re.match("/" + path["path"] + "/", self.path) is not None:
                     if config["devices"][path["type"]]["type"] == "command":
                         # When the device type is command, execute it
-                        print("Acción de tipo comando")
+                        print("Action type: command")
                         command = config["devices"][path["type"]]["command"]
                         command = command + path["code"]
                         if config["devices"][path["type"]]["hasExtra"] == "true":
@@ -97,7 +97,7 @@ class AuthHandler(SimpleHTTPRequestHandler):
                         self.execute(command)
                     elif config["devices"][path["type"]]["type"] == "database":
                         # When the device type is database, check if it's for select or insert
-                        print("Acción de tipo base de datos")
+                        print("Action type: database")
                         if config["devices"][path["type"]]["operation"] == "insert":
                             start = len(path["path"]) + 2
                             self.add_to_db(data=self.path[start:], room=path["code"])
@@ -105,7 +105,7 @@ class AuthHandler(SimpleHTTPRequestHandler):
                             start = len(path["path"]) + 2
                             self.select_from_db(room=self.path[start:])
                     else:
-                        print("desconocido")
+                        print("Unknown")
                         print(config["devices"][path["type"]]["type"])
 
             if re.match('/exitprogram/', self.path) is not None:
@@ -150,7 +150,7 @@ def get_preferences():
         with open("ssl_server.json", 'r') as config_file:
             return json.loads(config_file.read())
     if os.path.isfile("/etc/ssl_server.json"):
-        with open("ssl_server.json", 'r') as config_file:
+        with open("/etc/ssl_server.json", 'r') as config_file:
             return json.loads(config_file.read())
     sys.exit("No configuration file found. Terminating program.")
 
