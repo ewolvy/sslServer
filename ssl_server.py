@@ -84,7 +84,7 @@ class AuthHandler(SimpleHTTPRequestHandler):
             print("Searching action for:")
             print(self.path)
             for path in config["paths"]:
-                if re.match("/" + path["path"] + "/", self.path) is not None:
+                if re.match("/" + path["path"], self.path) is not None:
                     if config["devices"][path["type"]]["type"] == "command":
                         # When the device type is command, execute it
                         print("Action type: command")
